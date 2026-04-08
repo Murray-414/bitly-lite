@@ -1,4 +1,4 @@
-<<<<<<< HEAD
+
 # Bitly-Lite — URL Shortening Service with Analytics
 ### DSA-PROJECT | Variant B3 | Python
 
