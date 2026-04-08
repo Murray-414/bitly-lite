@@ -34,14 +34,14 @@ Design and implement a simplified URL shortening service (like Bitly) that:
 
 ```
   USER / CLI  ──────►  cli.py  (Interface Layer)
-                              │
+                                 │
               ┌───────────────┼──────────────────┐
-              ▼                                          ▼                                                   ▼
-         analytics.py                         url_store.py                                 benchmark.py
-         (Analytics)                          (Core Engine)                                (Perf Tests)
-                                                                      │
-         ┌────────────────────┼───────────────────────────────────────┐
-         ▼                              ▼                              ▼                             ▼                               ▼                                   ▼
+              ▼                 ▼                     ▼
+         analytics.py           url_store.py         benchmark.py
+         (Analytics)            (Core Engine)        (Perf Tests)
+                                  │
+         ┌────────────────────┼────────────────────────────────────────────────────────────────┐
+         ▼                  ▼                    ▼                   ▼                  ▼                  ▼
    Hash Map (dict)      Stack (list)            Queue (deque)     Heap (heapq)       Graph (dict→set)     Sort/Search
    shorten/resolve      undo history            click events       top-k analytics      referrer BFS           Tim-sort + BinSearch
                    
@@ -147,9 +147,11 @@ Full details in `docs/System_Design_Report.pdf`.
 | ERICSON KARANJA | Back end design and implementation|
 | TINAELIS MUMBI| UI design and Documentation|
 ---
+---
 
+
+---
 
 =======
 # BITLY-LITE
 Bitly-Lite. A URL Shortening Service with Analytics — DSA Project.
->>>>>>> 97c4a93300040bdccc778765b245edab3090f20d
