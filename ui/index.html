@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bitly-Lite — URL Shortener</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet"/>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #080c14;
+  --surface:   #0d1424;
+  --card:      #111927;
+  --border:    #1e2d45;
+  --accent:    #00d4ff;
+  --accent2:   #0088ff;
+  --green:     #00ff88;
+  --red:       #ff4466;
+  --yellow:    #ffd700;
+  --text:      #c8d8e8;
+  --muted:     #4a6280;
+  --white:     #ffffff;
+  --font-head: 'Syne', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --radius:    10px;
+  --glow:      0 0 20px rgba(0,212,255,0.15);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 32px 0 40px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 48px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo-icon {
+  width: 42px; height: 42px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+  box-shadow: var(--glow);
+  flex-shrink: 0;
+}
+
+.logo-text {
+  font-family: var(--font-head);
+  font-weight: 800;
+  font-size: 26px;
+  color: var(--white);
+  letter-spacing: -0.5px;
+}
+
+.logo-sub {
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.header-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+
+.badge.live { border-color: var(--green); color: var(--green); }
+
+.stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+
+.stat-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+.stat-card:hover {
+  border-color: var(--accent);
+  box-shadow: var(--glow);
+}
+
+.stat-label {
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  font-family: var(--font-head);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--white);
+  line-height: 1;
+}
+
+.stat-value.accent { color: var(--accent); }
+.stat-value.green  { color: var(--green);  }
+
+.main-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+.panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+}
+
+.panel-title {
+  font-family: var(--font-head);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-title .ds-tag {
+  font-size: 9px;
+  background: rgba(0,212,255,0.1);
+  border: 1px solid rgba(0,212,255,0.3);
+  color: var(--accent);
+  padding: 2px 8px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
+
+.field { margin-bottom: 14px; }
+
+label {
+  display: block;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+input[type="text"], input[type="url"] {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 11px 14px;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+
+input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(0,212,255,0.1);
+}
+
+input::placeholder { color: var(--muted); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 11px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: all .2s;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #000;
+  font-weight: 700;
+  width: 100%;
+}
+.btn-primary:hover { opacity: 0.85; transform: translateY(-1px); box-shadow: var(--glow); }
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  width: 100%;
+}
+.btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-danger {
+  background: transparent;
+  border: 1px solid var(--red);
+  color: var(--red);
+  padding: 6px 12px;
+  font-size: 10px;
+}
+.btn-danger:hover { background: var(--red); color: #000; }
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 10px;
+}
+
+.result-box {
+  margin-top: 16px;
+  background: var(--surface);
+  border: 1px solid var(--green);
+  border-radius: 8px;
+  padding: 16px;
+  display: none;
+  animation: fadeIn .3s ease;
+}
+
+.result-box.error {
+  border-color: var(--red);
+}
+
+.result-label {
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.result-url {
+  font-size: 15px;
+  color: var(--green);
+  font-weight: 700;
+  word-break: break-all;
+  margin-bottom: 10px;
+}
+
+.result-url.error-text { color: var(--red); }
+
+.result-meta {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.copy-btn {
+  margin-top: 10px;
+  background: rgba(0,255,136,0.1);
+  border: 1px solid var(--green);
+  color: var(--green);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .2s;
+}
+.copy-btn:hover { background: var(--green); color: #000; }
+
+.full-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  margin-bottom: 24px;
+}
+
+.table-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--white);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 9px 14px;
+  outline: none;
+  transition: border-color .2s;
+}
+.search-input:focus { border-color: var(--accent); }
+.search-input::placeholder { color: var(--muted); }
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead th {
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+
+tbody tr {
+  border-bottom: 1px solid rgba(30,45,69,0.5);
+  transition: background .15s;
+}
+
+tbody tr:hover { background: rgba(0,212,255,0.03); }
+
+tbody td {
+  padding: 12px 14px;
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+.code-cell {
+  font-family: var(--font-mono);
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.url-cell {
+  color: var(--text);
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clicks-cell {
+  color: var(--yellow);
+  font-weight: 700;
+}
+
+.alias-dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-right: 4px;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.topk-list { list-style: none; }
+
+.topk-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.topk-item:last-child { border-bottom: none; }
+
+.topk-rank {
+  font-family: var(--font-head);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--border);
+  width: 28px;
+  flex-shrink: 0;
+}
+
+.topk-rank.gold   { color: var(--yellow); }
+.topk-rank.silver { color: #aaa; }
+.topk-rank.bronze { color: #cd7f32; }
+
+.topk-info { flex: 1; min-width: 0; }
+
+.topk-code {
+  font-size: 13px;
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.topk-url {
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topk-bar-wrap {
+  width: 80px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.topk-bar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent2), var(--accent));
+  border-radius: 2px;
+  transition: width .5s ease;
+}
+
+.topk-clicks {
+  font-size: 13px;
+  color: var(--yellow);
+  font-weight: 700;
+  width: 32px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.toast {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  background: var(--card);
+  border: 1px solid var(--green);
+  color: var(--green);
+  font-size: 12px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  z-index: 999;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all .3s;
+  pointer-events: none;
+}
+
+.toast.show { opacity: 1; transform: translateY(0); }
+.toast.err  { border-color: var(--red); color: var(--red); }
+
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stagger { animation: fadeIn .4s ease both; }
+.stagger:nth-child(1) { animation-delay: .05s; }
+.stagger:nth-child(2) { animation-delay: .10s; }
+.stagger:nth-child(3) { animation-delay: .15s; }
+.stagger:nth-child(4) { animation-delay: .20s; }
+
+@media (max-width: 768px) {
+  .stats-bar    { grid-template-columns: repeat(2,1fr); }
+  .main-grid    { grid-template-columns: 1fr; }
+  .header-badges { display: none; }
+  .url-cell     { max-width: 160px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">🔗</div>
+      <div>
+        <div class="logo-text">Bitly-Lite</div>
+        <div class="logo-sub">DSA-Project · Variant B3</div>
+      </div>
+    </div>
+    <div class="header-badges">
+      <span class="badge live">● Live</span>
+      <span class="badge">Hash Map</span>
+      <span class="badge">Heap</span>
+      <span class="badge">Stack</span>
+      <span class="badge">Queue</span>
+      <span class="badge">Graph</span>
+    </div>
+  </header>
+
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card stagger">
+      <div class="stat-label">Total URLs</div>
+      <div class="stat-value accent" id="statUrls">—</div>
+    </div>
+    <div class="stat-card stagger">
+      <div class="stat-label">Total Clicks</div>
+      <div class="stat-value green" id="statClicks">—</div>
+    </div>
+    <div class="stat-card stagger">
+      <div class="stat-label">Stack Depth</div>
+      <div class="stat-value" id="statStack">—</div>
+    </div>
+    <div class="stat-card stagger">
+      <div class="stat-label">Queue Depth</div>
+      <div class="stat-value" id="statQueue">—</div>
+    </div>
+  </div>
+
+  <div class="main-grid">
+
+    <div class="panel stagger">
+      <div class="panel-title">
+        Shorten URL
+        <span class="ds-tag">Hash Map O(1)</span>
+      </div>
+
+      <div class="field">
+        <label>Long URL</label>
+        <input type="url" id="inputUrl" placeholder="https://example.com/very/long/url"/>
+      </div>
+      <div class="field">
+        <label>Custom Alias <span style="color:var(--muted)">(optional)</span></label>
+        <input type="text" id="inputAlias" placeholder="e.g. mylink"/>
+      </div>
+
+      <button class="btn btn-primary" onclick="shortenUrl()">
+        ⚡ Shorten
+      </button>
+
+      <div class="result-box" id="shortenResult">
+        <div class="result-label">Short Link</div>
+        <div class="result-url" id="shortenUrl">—</div>
+        <div class="result-meta" id="shortenMeta">—</div>
+        <button class="copy-btn" onclick="copyShort()">Copy Link</button>
+      </div>
+    </div>
+
+    <div class="panel stagger">
+      <div class="panel-title">
+        Top Links
+        <span class="ds-tag">Heap O(n log k)</span>
+      </div>
+      <ul class="topk-list" id="topkList">
+        <li class="empty">Loading...</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <div class="full-panel">
+    <div class="panel-title">
+      All Shortened URLs
+      <span class="ds-tag">Sorted O(n log n)</span>
+    </div>
+
+    <div class="table-controls">
+      <input class="search-input" id="searchInput"
+             placeholder="Search by prefix... (Binary Search)"
+             oninput="handleSearch(this.value)"/>
+      <button class="btn btn-ghost btn-sm" onclick="loadUrls()" style="width:auto;white-space:nowrap">
+        ↺ Refresh
+      </button>
+      <button class="btn btn-ghost btn-sm" onclick="undoLast()" style="width:auto;white-space:nowrap;border-color:var(--yellow);color:var(--yellow)">
+        ↩ Undo
+      </button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Original URL</th>
+          <th>Clicks</th>
+          <th>Type</th>
+          <th>Created</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="urlTable">
+        <tr><td colspan="6" class="empty">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let lastShortUrl = '';
+let searchTimeout = null;
+
+async function api(path, opts = {}) {
+  const res = await fetch(path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts
+  });
+  return res.json();
+}
+
+function toast(msg, err = false) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (err ? ' err' : '');
+  setTimeout(() => el.className = 'toast', 3000);
+}
+
+async function loadDashboard() {
+  const d = await api('/api/dashboard');
+  document.getElementById('statUrls').textContent   = d.total_urls   ?? '—';
+  document.getElementById('statClicks').textContent = d.total_clicks ?? '—';
+  document.getElementById('statStack').textContent  = d.stack_depth  ?? '—';
+  document.getElementById('statQueue').textContent  = d.queue_depth  ?? '—';
+}
+
+async function loadTopK() {
+  const data = await api('/api/topk?k=5');
+  const list = document.getElementById('topkList');
+  if (!data.length) {
+    list.innerHTML = '<li class="empty">No links yet</li>'; return;
+  }
+  const maxClicks = data[0]?.clicks || 1;
+  const ranks = ['gold','silver','bronze'];
+  list.innerHTML = data.map((item, i) => `
+    <li class="topk-item">
+      <span class="topk-rank ${ranks[i] || ''}">${i+1}</span>
+      <div class="topk-info">
+        <div class="topk-code">${item.code}</div>
+        <div class="topk-url">${item.original}</div>
+      </div>
+      <div class="topk-bar-wrap">
+        <div class="topk-bar" style="width:${Math.round((item.clicks/maxClicks)*100)}%"></div>
+      </div>
+      <span class="topk-clicks">${item.clicks}</span>
+    </li>
+  `).join('');
+}
+
+async function loadUrls() {
+  const data = await api('/api/urls');
+  renderTable(data);
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById('urlTable');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty">No URLs yet — shorten one above!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(u => `
+    <tr>
+      <td class="code-cell">
+        <a href="/r/${u.code}" target="_blank" title="Click to visit"
+           style="color:var(--accent);text-decoration:none;"
+           onmouseover="this.style.textDecoration='underline'"
+           onmouseout="this.style.textDecoration='none'">
+          ${u.code}
+        </a>
+       </td>
+      <td class="url-cell" title="${u.original}">${u.original}</td>
+      <td class="clicks-cell">${u.clicks}</td>
+      <td>${u.alias ? '<span class="alias-dot"></span>Alias' : 'Auto'}</td>
+      <td style="color:var(--muted);font-size:11px">${u.created}</td>
+      <td class="actions-cell">
+        <button class="btn btn-danger btn-sm" onclick="deleteUrl('${u.code}')">✕ Del</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function shortenUrl() {
+  const url   = document.getElementById('inputUrl').value.trim();
+  const alias = document.getElementById('inputAlias').value.trim();
+  const box   = document.getElementById('shortenResult');
+  const urlEl = document.getElementById('shortenUrl');
+  const meta  = document.getElementById('shortenMeta');
+
+  if (!url) { toast('Please enter a URL', true); return; }
+
+  try {
+    const data = await api('/api/shorten', {
+      method: 'POST',
+      body: JSON.stringify({ url, alias: alias || null })
+    });
+
+    if (data.error) {
+      box.style.display = 'block';
+      box.className = 'result-box error';
+      urlEl.textContent = data.error;
+      urlEl.className = 'result-url error-text';
+      meta.textContent = '';
+      toast(data.error, true);
+      return;
+    }
+
+    lastShortUrl = data.short;
+    box.style.display = 'block';
+    box.className = 'result-box';
+    urlEl.textContent = data.short;
+    urlEl.className = 'result-url';
+    meta.textContent = `Created ${data.created} · ${data.alias ? 'Custom alias' : 'Auto-generated'} · 0 clicks`;
+    toast('URL shortened successfully!');
+
+    document.getElementById('inputUrl').value   = '';
+    document.getElementById('inputAlias').value = '';
+
+    refreshAll();
+  } catch(e) {
+    toast('Server error', true);
+  }
+}
+
+function copyShort() {
+  if (!lastShortUrl) return;
+  navigator.clipboard.writeText(lastShortUrl)
+    .then(() => toast('Copied to clipboard!'))
+    .catch(() => toast('Copy failed', true));
+}
+
+async function deleteUrl(code) {
+  if (!confirm(`Delete short code "${code}"?`)) return;
+  const data = await api(`/api/delete/${code}`, { method: 'DELETE' });
+  if (data.message) {
+    toast(data.message);
+    refreshAll();
+  } else {
+    toast(data.error || 'Delete failed', true);
+  }
+}
+
+async function undoLast() {
+  const data = await api('/api/undo', { method: 'POST' });
+  if (data.message) {
+    toast('↩ ' + data.message);
+    refreshAll();
+  } else {
+    toast(data.error || 'Nothing to undo', true);
+  }
+}
+
+function handleSearch(val) {
+  clearTimeout(searchTimeout);
+  if (!val.trim()) { loadUrls(); return; }
+  searchTimeout = setTimeout(async () => {
+    const data = await api(`/api/search?q=${encodeURIComponent(val.trim())}`);
+    renderTable(data.map(r => ({
+      code: r.code,
+      original: r.original,
+      clicks: r.clicks,
+      alias: false,
+      created: '—'
+    })));
+  }, 300);
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' &&
+      (document.activeElement.id === 'inputUrl' ||
+       document.activeElement.id === 'inputAlias')) {
+    shortenUrl();
+  }
+});
+
+async function refreshAll() {
+  await Promise.all([loadDashboard(), loadTopK(), loadUrls()]);
+}
+
+refreshAll();
+setInterval(refreshAll, 10000);
+</script>
+</body>
+</html>
